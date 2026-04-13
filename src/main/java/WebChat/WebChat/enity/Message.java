@@ -1,15 +1,19 @@
 package WebChat.WebChat.enity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "messages")
-@Getter
-@Setter
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Message {
 
     @Id
@@ -29,7 +33,7 @@ public class Message {
     private Room room;
 
     private String content;
+    private String messageType;
 
-    @Column(name = "created_at")
     private LocalDateTime createdAt;
 }

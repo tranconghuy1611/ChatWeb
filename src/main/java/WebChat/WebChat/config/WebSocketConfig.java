@@ -1,27 +1,42 @@
-    package WebChat.WebChat.config;
+package WebChat.WebChat.config;
 
-    import org.springframework.context.annotation.Configuration;
-    import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-    import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
-    import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
-    import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
-    @Configuration
-    @EnableWebSocketMessageBroker
-    public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.messaging.simp.config.ChannelRegistration;
+import org.springframework.web.socket.config.annotation.*;
+import lombok.RequiredArgsConstructor;
 
-        @Override
-        public void registerStompEndpoints(StompEndpointRegistry registry) {
-            registry.addEndpoint("/ws")
-                    .addInterceptors(new UserHandshakeInterceptor()) // 👈 thêm dòng này
-                    .setHandshakeHandler(new CustomHandshakeHandler()) // 👈 sửa lại
-                    .setAllowedOriginPatterns("*");
-        }
+@Configuration
+@EnableWebSocketMessageBroker
+@RequiredArgsConstructor
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-        @Override
-        public void configureMessageBroker(MessageBrokerRegistry registry) {
-            registry.enableSimpleBroker("/topic", "/queue");
-            registry.setApplicationDestinationPrefixes("/app");
-            registry.setUserDestinationPrefix("/user");
-        }
+    private final ChannelInterceptor webSocketAuthChannelInterceptor;
+
+    @Override
+    public void configureMessageBroker(MessageBrokerRegistry config) {
+
+        // nơi client SUBSCRIBE
+        config.enableSimpleBroker("/topic", "/queue");
+
+        // nơi client SEND
+        config.setApplicationDestinationPrefixes("/app");
+
+        // private message
+        config.setUserDestinationPrefix("/user");
     }
+
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/ws")
+                .setAllowedOrigins("http://localhost:5173") // 🔥 FIX
+                .withSockJS(); // hỗ trợ fallback
+    }
+
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(webSocketAuthChannelInterceptor);
+    }
+}

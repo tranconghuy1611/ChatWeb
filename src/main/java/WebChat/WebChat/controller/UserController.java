@@ -1,65 +1,45 @@
 package WebChat.WebChat.controller;
 
-import WebChat.WebChat.dto.request.UserRequest;
+
 import WebChat.WebChat.dto.response.UserResponse;
 import WebChat.WebChat.enity.User;
 import WebChat.WebChat.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin("*")
+@RequiredArgsConstructor
 public class UserController {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
-    @PostMapping("/register")
-    public UserResponse register(@RequestBody UserRequest req) {
-
-        User user = userService.createUser( req.getUsername(),
-                req.getPassword(),
-                req.getFullname(),
-                req.getSdt());
-
-        return new UserResponse(
-                user.getId(),
-                user.getUsername(),
-                user.getFullname()
-        );
-    }
-
-    @PostMapping("/login")
-    public UserResponse login(@RequestBody UserRequest req) {
-
-        User user = userService.login(
-                req.getUsername(),
-                req.getPassword()
-        );
-
-        return new UserResponse(
-                user.getId(),
-                user.getUsername(),
-                user.getFullname()
-        );
-    }
-
+    // 🔍 search user
     @GetMapping("/search")
-    public List<UserResponse> search(@RequestParam String keyword) {
-
-        List<User> users = userService.searchByFullnameOrSdt(keyword);
-
-        return users.stream().map(user -> new UserResponse(
-                user.getId(),
-                user.getUsername(),
-                user.getFullname()
-        )).toList();
+    public List<UserResponse> searchUsers(@RequestParam String keyword) {
+        return userService.searchUsers(keyword)
+                .stream()
+                .map(u -> UserResponse.builder()
+                        .username(u.getUsername())
+                        .fullname(u.getFullname())
+                        .sdt(u.getSdt())
+                        .build())
+                .toList();
     }
-    @GetMapping
-    public List<User> getAll() {
-        return userService.getAllUsers();
+    @GetMapping("/me")
+    public UserResponse getMyInfo(Authentication authentication) {
+
+        String username = authentication.getName();
+
+        User user = userService.findByUsername(username);
+
+        return UserResponse.builder()
+                .username(user.getUsername())
+                .fullname(user.getFullname())
+                .sdt(user.getSdt())
+                .build();
     }
 }

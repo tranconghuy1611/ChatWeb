@@ -1,38 +1,35 @@
 package WebChat.WebChat.controller;
 
-import WebChat.WebChat.dto.request.RoomRequest;
-import WebChat.WebChat.dto.response.RoomResponse;
+
+
+import WebChat.WebChat.dto.request.CreateRoomRequest;
 import WebChat.WebChat.enity.Room;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
 import WebChat.WebChat.service.RoomService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/rooms")
+@RequiredArgsConstructor
 public class RoomController {
 
-    @Autowired
-    private RoomService roomService;
+    private final RoomService roomService;
 
+    // tạo group
     @PostMapping
-    public RoomResponse create(@RequestBody RoomRequest req) {
-
-        Room room = roomService.createRoom(
-                req.getRoomId(),
+    public Room createRoom(@RequestBody CreateRoomRequest req) {
+        return roomService.createRoom(
                 req.getRoomName(),
-                req.getUsers()
-        );
-
-        return new RoomResponse(
-                room.getRoomId(),
-                room.getRoomName()
+                req.getCreator(),
+                req.getMembers()
         );
     }
 
-    @GetMapping("/{username}")
-    public List<Room> getByUser(@PathVariable String username) {
+    // lấy room theo user
+    @GetMapping
+    public List<Room> getRooms(@RequestParam String username) {
         return roomService.getRoomsByUser(username);
     }
 }

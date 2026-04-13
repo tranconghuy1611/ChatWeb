@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Table(name = "users")
 @Getter
 @Setter
-@ToString
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
@@ -18,23 +18,12 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(unique = true, nullable = false, length = 50)
+    @Column(unique = true)
     private String username;
 
-    @Column(nullable = false)
     private String password;
-
-    @Column(name = "fullname", nullable = false, length = 100)
     private String fullname;
-
-    @Column(name = "sdt", unique = true, length = 15)
     private String sdt;
-
-    @Column(name = "created_at", updatable = false)
+    private String role;
     private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-    }
 }
