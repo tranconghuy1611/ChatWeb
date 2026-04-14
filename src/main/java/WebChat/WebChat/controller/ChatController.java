@@ -3,7 +3,6 @@ package WebChat.WebChat.controller;
 import WebChat.WebChat.dto.request.PrivateChatRequest;
 import WebChat.WebChat.dto.request.RoomChatRequest;
 import WebChat.WebChat.dto.response.ChatResponse;
-import WebChat.WebChat.enity.ChatMessage;
 import WebChat.WebChat.enity.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -26,45 +25,54 @@ public class ChatController {
     // CHAT RIÊNG
     // =========================
     @MessageMapping("/chat.private")
-    public void privateChat(PrivateChatRequest req) {
+    public void privateChat(PrivateChatRequest req, Principal principal) {
+        String sender = principal.getName();
 
-        Message saved = messageService.savePrivate(
-                req.getSender(),
+        Message saved = messageService.savePrivateInRoom(
+                sender,
                 req.getReceiver(),
+                req.getRoomId(),
                 req.getContent()
         );
 
         ChatResponse res = new ChatResponse(
                 saved.getSender().getUsername(),
-                saved.getContent(),                // ✅ đúng
-                saved.getReceiver().getUsername()
+                saved.getReceiver().getUsername(),
+                saved.getRoom().getRoomId(),
+                saved.getContent(),
+                saved.getCreatedAt()
         );
 
-        messagingTemplate.convertAndSendToUser(
-                req.getReceiver(),
-                "/queue/messages",
-                res
-        );
-
-        messagingTemplate.convertAndSendToUser(
-                req.getSender(),
-                "/queue/messages",
+        messagingTemplate.convertAndSend(
+                "/topic/room/" + saved.getRoom().getRoomId(),
                 res
         );
     }
 
 
     @MessageMapping("/chat.room")
-    public void roomChat(RoomChatRequest req) {
+    public void roomChat(RoomChatRequest req, Principal principal) {
+        if (req.getRoomId() == null || req.getRoomId().isBlank()) {
+            throw new IllegalArgumentException("room_id là bắt buộc khi gửi tin nhắn");
+        }
+        String sender = principal.getName();
         Message saved = messageService.saveRoom(
-                req.getSender(),
+                sender,
                 req.getRoomId(),
                 req.getContent()
         );
 
+        ChatResponse res = new ChatResponse(
+                saved.getSender().getUsername(),
+                null,
+                saved.getRoom().getRoomId(),
+                saved.getContent(),
+                saved.getCreatedAt()
+        );
+
         messagingTemplate.convertAndSend(
                 "/topic/room/" + req.getRoomId(),
-                saved
+                res
         );
     }
 }

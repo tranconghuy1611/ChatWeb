@@ -30,6 +30,9 @@ public class User {
     @Column(name = "sdt", unique = true, length = 15)
     private String sdt;
 
+    @Column(name = "role", nullable = false, length = 20)
+    private String role = "USER";
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
