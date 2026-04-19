@@ -67,4 +67,21 @@ public class UserService {
         return userRepo.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
+    public User updateUser(Long id, String fullname, String sdt) {
+        User user = userRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setFullname(fullname);
+        user.setSdt(sdt);
+
+        return userRepo.save(user);
+    }
+    public User updateRole(Long id, String role) {
+        User user = userRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setRole(role);
+        return userRepo.save(user);
+    }
+
 }

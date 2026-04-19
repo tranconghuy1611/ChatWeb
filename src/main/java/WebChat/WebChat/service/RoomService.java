@@ -3,6 +3,7 @@ package WebChat.WebChat.service;
 import WebChat.WebChat.enity.Room;
 import WebChat.WebChat.enity.RoomMember;
 import WebChat.WebChat.enity.User;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import WebChat.WebChat.repository.RoomMemberRepository;
@@ -11,6 +12,7 @@ import WebChat.WebChat.repository.UserRepository;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class RoomService {
@@ -25,17 +27,31 @@ public class RoomService {
     private UserRepository userRepo;
 
     // tạo room + add members
+    @Transactional
     public Room createRoom(String roomId, String roomName, List<String> usernames) {
-        if (roomRepo.existsById(roomId)) {
-            throw new RuntimeException("Room đã tồn tại");
+
+        // ✅ validate + build roomId
+        if (roomId == null || roomId.isBlank()) {
+            if (usernames == null || usernames.size() < 2) {
+                throw new RuntimeException("Phải có ít nhất 2 user để tạo room private");
+            }
+            roomId = buildPrivateRoomId(usernames.get(0), usernames.get(1));
         }
 
+        // ✅ check tồn tại (1 query)
+        Optional<Room> existing = roomRepo.findById(roomId);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+
+        // ✅ tạo room
         Room room = new Room();
         room.setRoomId(roomId);
         room.setRoomName(roomName);
 
         roomRepo.save(room);
 
+        // ✅ add members
         for (String username : usernames) {
             User user = userRepo.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("User không tồn tại: " + username));
@@ -75,6 +91,11 @@ public class RoomService {
                 .stream()
                 .map(RoomMember::getRoom)
                 .toList();
+    }
+    private String buildPrivateRoomId(String u1, String u2) {
+        return u1.compareTo(u2) < 0
+                ? u1 + "_" + u2
+                : u2 + "_" + u1;
     }
 
     public List<Room> getAllRooms() {

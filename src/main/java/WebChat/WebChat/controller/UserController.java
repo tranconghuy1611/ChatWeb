@@ -95,4 +95,18 @@ public class UserController {
                 user.getRole()
         );
     }
+    @PutMapping("/{id}/role")
+    @PreAuthorize("hasRole('ADMIN')")
+    public UserResponse updateRole(@PathVariable Long id,
+                                   @RequestParam String role) {
+
+        User user = userService.updateRole(id, role);
+
+        return new UserResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getFullname(),
+                user.getRole()
+        );
+    }
 }

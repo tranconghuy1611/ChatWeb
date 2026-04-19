@@ -48,7 +48,7 @@ public class MessageService {
                 : roomId;
 
         Room room = roomRepo.findById(resolvedRoomId)
-                .orElseGet(() -> createPrivateRoom(resolvedRoomId, s, r));
+                .orElseThrow(() -> new RuntimeException("Room không tồn tại"));
 
         ensureRoomMember(room, s);
         ensureRoomMember(room, r);

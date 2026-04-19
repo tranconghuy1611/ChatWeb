@@ -11,6 +11,8 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     Optional<User> findByUsername(String username);
     List<User> findByFullnameContainingIgnoreCaseOrSdtContaining(String fullname, String sdt);
 
+    Optional<User> findById(Long integer);
+
     boolean existsByUsername(String username);
     boolean existsBySdt(String sdt);
 }
