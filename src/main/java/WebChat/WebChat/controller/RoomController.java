@@ -1,5 +1,6 @@
 package WebChat.WebChat.controller;
 
+import WebChat.WebChat.dto.request.PrivateRoomRequest;
 import WebChat.WebChat.dto.request.RoomRequest;
 import WebChat.WebChat.dto.request.RoomMembersRequest;
 import WebChat.WebChat.dto.request.RoomUpdateRequest;
@@ -27,19 +28,20 @@ public class RoomController {
     @Autowired
     private RoomService roomService;
 
-    @PostMapping
-    public RoomResponse create(@RequestBody RoomRequest req) {
+    @PostMapping("/private")
+    public RoomResponse createPrivate(@RequestBody PrivateRoomRequest req, Principal principal) {
+        String other = req.getTargetUsername();
+        Room room = roomService.createPrivateRoom(principal.getName(), other);
+        return new RoomResponse(room.getRoomId(), room.getRoomName());
+    }
 
-        Room room = roomService.createRoom(
-                req.getRoomId(),
-                req.getRoomName(),
-                req.getUsers()
-        );
-
-        return new RoomResponse(
-                room.getRoomId(),
-                room.getRoomName()
-        );
+    // =====================
+// TẠO NHÓM NHIỀU NGƯỜI
+// =====================
+    @PostMapping("/group")
+    public RoomResponse createGroup(@RequestBody RoomRequest req) {
+        Room room = roomService.createGroupRoom(req.getRoomName(), req.getUsers());
+        return new RoomResponse(room.getRoomId(), room.getRoomName());
     }
 
     @GetMapping("/{username}")

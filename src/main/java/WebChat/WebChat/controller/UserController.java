@@ -18,7 +18,7 @@ import java.util.List;
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:3000",
-        "http://127.0.0.1:3000"
+        "http://129.212.239.252"
 })
 public class UserController {
 

@@ -13,6 +13,7 @@ import WebChat.WebChat.repository.UserRepository;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class RoomService {
@@ -28,30 +29,42 @@ public class RoomService {
 
     // tạo room + add members
     @Transactional
-    public Room createRoom(String roomId, String roomName, List<String> usernames) {
-
-        // ✅ validate + build roomId
-        if (roomId == null || roomId.isBlank()) {
-            if (usernames == null || usernames.size() < 2) {
-                throw new RuntimeException("Phải có ít nhất 2 user để tạo room private");
-            }
-            roomId = buildPrivateRoomId(usernames.get(0), usernames.get(1));
+    public Room createGroupRoom(String roomName, List<String> usernames) {
+        if (usernames == null || usernames.size() < 2) {
+            throw new RuntimeException("Nhóm phải có ít nhất 2 thành viên");
+        }
+        if (roomName == null || roomName.isBlank()) {
+            throw new RuntimeException("Tên nhóm không được để trống");
         }
 
-        // ✅ check tồn tại (1 query)
-        Optional<Room> existing = roomRepo.findById(roomId);
-        if (existing.isPresent()) {
-            return existing.get();
-        }
+        String roomId = "grp_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
 
-        // ✅ tạo room
         Room room = new Room();
         room.setRoomId(roomId);
         room.setRoomName(roomName);
-
         roomRepo.save(room);
 
-        // ✅ add members
+        addMembersToRoom(room, usernames);
+        return room;
+    }
+    @Transactional
+    public Room createPrivateRoom(String usernameA, String usernameB) {
+        String roomId = buildPrivateRoomId(usernameA, usernameB);
+
+        // Đã tồn tại → trả về luôn
+        Optional<Room> existing = roomRepo.findById(roomId);
+        if (existing.isPresent()) return existing.get();
+
+        Room room = new Room();
+        room.setRoomId(roomId);
+        room.setRoomName(usernameA + "-" + usernameB);
+        roomRepo.save(room);
+
+        addMembersToRoom(room, List.of(usernameA, usernameB));
+        return room;
+    }
+
+    private void addMembersToRoom(Room room, List<String> usernames) {
         for (String username : usernames) {
             User user = userRepo.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("User không tồn tại: " + username));
@@ -59,13 +72,9 @@ public class RoomService {
             RoomMember rm = new RoomMember();
             rm.setRoom(room);
             rm.setUser(user);
-
             roomMemberRepo.save(rm);
         }
-
-        return room;
     }
-
     // join room
     public void joinRoom(String roomId, String username) {
 
@@ -93,10 +102,12 @@ public class RoomService {
                 .toList();
     }
     private String buildPrivateRoomId(String u1, String u2) {
-        return u1.compareTo(u2) < 0
+        String sorted = u1.compareTo(u2) < 0
                 ? u1 + "_" + u2
                 : u2 + "_" + u1;
+        return "prv_" + sorted;
     }
+
 
     public List<Room> getAllRooms() {
         return roomRepo.findAll();
